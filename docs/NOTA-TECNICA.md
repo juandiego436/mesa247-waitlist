@@ -47,7 +47,7 @@ Esa suma asume que a la hora de cerrar no queda nadie esperando. En la vida real
       │
       ├── table (id, venue_id, external_ref, label, seats,
       │          status, held_by_entry_id, occupied_since, auto_release_at)
-      │          UNIQUE parcial (held_by_entry_id) · UNIQUE (venue_id, label)
+      │          UNIQUE (held_by_entry_id) · UNIQUE (venue_id, label)
       │
       └── waitlist_entry
              id, venue_id, service_date, public_token UNIQUE
@@ -63,7 +63,11 @@ Esa suma asume que a la hora de cerrar no queda nadie esperando. En la vida real
 
 **Lo que sí es una columna aunque parezca redundante:** `quoted_wait_minutes`. Es lo que le prometimos al comensal al unirse, no se puede reconstruir después, y es lo único que permite comparar prometido contra real.
 
-**El invariante que cruza dos tablas** —una mesa no puede estar retenida por dos comensales— se protege en tres capas: el servicio de dominio da el error legible, la transacción del caso de uso las guarda juntas o ninguna, y el índice único parcial en MySQL es la garantía real. Dos anfitriones tocando la misma mesa en el mismo segundo los separa el índice, no el dominio. Confundir esas tres capas es cómo se llega a un doble-booking en producción.
+**El invariante que cruza dos tablas** —una mesa no puede estar retenida por dos comensales— se protege en tres capas: el servicio de dominio da el error legible, la transacción del caso de uso las guarda juntas o ninguna, y un **bloqueo de fila (`SELECT ... FOR UPDATE`)** sobre la mesa es la garantía real. Dos anfitriones tocando la misma mesa en el mismo segundo los separa ese bloqueo, no el dominio. Confundir esas tres capas es cómo se llega a un doble-booking en producción.
+
+Conviene ser preciso sobre qué hace cada índice, porque es fácil equivocarse aquí: **MySQL no tiene índices únicos parciales** —eso es Postgres—, así que la protección contra la lectura-escritura perdida sobre la fila de la mesa tiene que ser el bloqueo, no un índice. El `UNIQUE (held_by_entry_id)` resuelve otra cosa: que una misma entrada no retenga dos mesas. Funciona porque MySQL admite varios `NULL` en un índice único, así que las mesas libres no chocan entre sí.
+
+Efecto secundario que hay que tener presente: **SQLite no implementa `FOR UPDATE`** (serializa las escrituras y no lo necesita). Por eso el bloqueo depende del perfil, y por eso el test que de verdad prueba este invariante tiene que correr contra MySQL en CI, no contra el SQLite del portátil.
 
 ## 4. Lo que le devuelvo al diseñador, y cómo
 

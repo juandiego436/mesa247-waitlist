@@ -8,3 +8,10 @@ requires-python = ">=3.11"
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+# Ruido de starlette y fastapi sobre Python 3.14, no de nuestro codigo.
+filterwarnings = [
+    "ignore::DeprecationWarning:starlette.*",
+    "ignore::DeprecationWarning:fastapi.*",
+    "ignore:.*iscoroutinefunction.*:DeprecationWarning",
+    "ignore:.*BlockingPortal.*:DeprecationWarning",
+]
