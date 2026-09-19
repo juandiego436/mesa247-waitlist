@@ -1,0 +1,8 @@
+# Normaliza los finales de linea en el repositorio.
+# Sin esto, un equipo mixto Windows/Linux genera diffs de archivos enteros en
+# los que no cambio ni una linea, y las revisiones se vuelven inutiles.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
