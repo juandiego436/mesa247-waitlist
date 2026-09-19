@@ -22,8 +22,10 @@ python -m uvicorn waitlist.infrastructure.http.app:app --app-dir src --port 8000
 En otra terminal:
 
 ```bash
-npm install --prefix frontend && npm run dev --prefix frontend
+cd frontend && npm install && npm run dev
 ```
+
+> `cd` y no `npm install --prefix frontend`: con `--prefix`, npm en Windows instala los paquetes pero **no enlaza `node_modules/.bin`**, así que el `tsc` del build no aparece y falla con un mensaje que no dice por qué. Comprobado clonando el repositorio desde cero.
 
 | | |
 |---|---|
