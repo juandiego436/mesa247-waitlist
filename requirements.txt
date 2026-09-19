@@ -1,0 +1,9 @@
+# Dominio: cero dependencias. Se ejecuta y se testea con la libreria estandar.
+
+# tzdata NO es opcional. ServiceDate depende de la zona del local (America/Lima
+# y America/Santiago) y Windows no trae la base de IANA; algunas imagenes slim
+# de Linux tampoco. Fijarlo aqui hace que la jornada se calcule igual en el
+# portatil del desarrollador y en Cloud Run.
+tzdata==2025.2
+
+pytest==8.3.4

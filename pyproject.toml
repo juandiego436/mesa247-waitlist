@@ -1,0 +1,10 @@
+[project]
+name = "mesa247-waitlist"
+version = "0.1.0"
+description = "Lista de espera digital - corte para el piloto de tres locales"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
