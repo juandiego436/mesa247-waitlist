@@ -207,3 +207,57 @@ proyecto real.
 | WhatsApp real en el piloto | **Cortado** | Plantilla de Meta = días de trámite, y a veces la rechazan |
 | Reporte por correo | **Cortado** | Scheduler otra vez, más dos husos. El cálculo ya está |
 | `quoted_wait_minutes` | **Sí, se guarda** | Es la excepción: no se puede reconstruir después |
+
+---
+
+## Turno 5 — Usuario
+
+> el camino completo de punta a punta, crea ramas basandote en gitflow para tener un buen
+> modelo de ramificacion de cada entorno y tambien implementa perfiles para el back end y
+> tambien la conexion a base de datos, esto aplicalo tanto en backend como en el front end.
+
+## Turno 5 — Asistente
+
+Abrió corrigiéndose a sí mismo y cuestionando la elección de GitFlow.
+
+**La corrección.** En la nota del turno 3 había escrito «índice único parcial en MySQL».
+**MySQL no tiene índices parciales** — eso es Postgres. Lo que protege del doble-booking es
+un **bloqueo de fila (`SELECT ... FOR UPDATE`)** dentro de la transacción. El `UNIQUE` sobre
+`held_by_entry_id` resuelve otra cosa (que una entrada no retenga dos mesas) y funciona
+porque MySQL admite varios `NULL` en un índice único. Corregido en el código, el README y la
+nota. Corolario que también quedó escrito: **SQLite no implementa `FOR UPDATE`**, así que el
+test que de verdad prueba ese invariante tiene que correr contra MySQL en CI.
+
+**La objeción a GitFlow.** Está diseñado para software con lanzamientos programados; su
+propio autor publicó en 2020 que para una aplicación web de entrega continua probablemente
+no hace falta. Aquí se despliega a Cloud Run, hay una sola versión viva y el piloto dura
+tres semanas. El coste concreto: un hotfix un viernes a las nueve son cuatro pasos de git
+con el restaurante esperando. Lo implementó igual, como se pidió, y dejó el reparo escrito
+en `docs/RAMIFICACION.md` junto con lo que propondría en su lugar.
+
+**Lo que construyó.** El camino completo: persistencia con SQLAlchemy Core y mappers a mano
+(cero decoradores en el dominio), unidad de trabajo con una transacción por caso de uso,
+Alembic tomando la URL del perfil activo y nunca del `.ini`, cuatro perfiles con guardas que
+**se niegan a arrancar** si en staging o producción la interactiva sigue abierta o el token
+es el de ejemplo, los dos routers separados, y un frontend React con modos de Vite.
+
+Dos decisiones de librería explicadas en vez de asumidas: **enrutado propio de veinte líneas
+en vez de react-router** (son tres pantallas y dos las abre un comensal con datos móviles en
+la puerta), y el aviso de tamaño de paquete fijado en 160 kB con el motivo escrito — React
+es ~140 de esos 160, o sea que el suelo lo pone la librería.
+
+**Tres cosas se encontraron ejecutando, no razonando:**
+
+1. `short()` abreviaba «Lucía y Ana» a «Lucia Y.». El prototipo los muestra enteros, y con
+   razón: no es un nombre que el anfitrión pueda gritar en la puerta.
+2. El regex de colectivos usaba `match()` en vez de `search()`, así que la rama del conector
+   no podía disparar nunca. Lo cazó el test, no la lectura.
+3. **El propio README daba una orden que no funciona.** Clonando el repositorio desde cero y
+   siguiéndolo al pie de la letra, `npm install --prefix frontend` instala los paquetes pero
+   no enlaza `node_modules/.bin`, y el build falla. Fue el primer `hotfix` real del
+   repositorio, por el flujo completo: `main` también lo tenía.
+
+Verificado de punta a punta en el navegador: un comensal se une y ve «Estás en el puesto 6 ·
+≈ 40 min», el anfitrión ve la cola con los teléfonos enmascarados, el selector de mesa marca
+con ⚠ las que no caben, y al llamar la mesa queda retenida con caducidad a los 15 minutos.
+75 tests, ~3 s.
