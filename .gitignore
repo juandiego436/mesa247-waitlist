@@ -14,3 +14,11 @@ build/
 *.sqlite3
 .idea/
 .vscode/
+
+# Perfiles reales de entornos compartidos: nunca al repositorio
+.env.staging
+.env.prod
+waitlist.db
+frontend/dist/
+frontend/node_modules/
+_tmp_autogen.db
